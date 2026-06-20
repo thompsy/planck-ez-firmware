@@ -1,0 +1,58 @@
+name: Build Planck EZ firmware
+
+# Builds the keymap in ./keymap against ZSA's QMK fork and publishes the .bin
+# as a downloadable artifact. Runs on every push and can be started manually
+# from the Actions tab (Run workflow).
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/qmk/qmk_cli
+
+    steps:
+      - name: Check out ZSA's QMK fork
+        uses: actions/checkout@v4
+        with:
+          repository: zsa/qmk_firmware
+          # ZSA's default branch tracks the current Oryx firmware revision.
+          # Pin to a tag/branch here if you ever need a specific revision.
+          submodules: recursive
+          path: qmk_firmware
+
+      - name: Check out this layout
+        uses: actions/checkout@v4
+        with:
+          path: layout
+
+      - name: Avoid git "dubious ownership" in container
+        run: git config --global --add safe.directory '*'
+
+      - name: Install keymap into the firmware tree
+        run: |
+          set -eux
+          dest="qmk_firmware/keyboards/zsa/planck_ez/keymaps/miryoku_tweaked"
+          mkdir -p "$dest"
+          cp layout/keymap/* "$dest"/
+
+      - name: Compile zsa/planck_ez/glow:miryoku_tweaked
+        working-directory: qmk_firmware
+        run: make zsa/planck_ez/glow:miryoku_tweaked
+
+      - name: Collect firmware
+        run: |
+          set -eux
+          mkdir -p out
+          # qmk drops the .bin at the firmware repo root
+          find qmk_firmware -maxdepth 1 -name '*.bin' -exec cp {} out/ \;
+          ls -l out
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: planck_ez_glow_firmware
+          path: out/*.bin
+          if-no-files-found: error
