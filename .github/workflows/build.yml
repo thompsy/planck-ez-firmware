@@ -2,11 +2,15 @@ name: Build Planck EZ firmware
 
 # Builds the keymap in ./keymap against mainline QMK and publishes the .bin
 # as a downloadable artifact. Runs on every push and can be started manually
-# from the Actions tab (Run workflow).
+# from the Actions tab (Run workflow). On main, it also updates a rolling
+# "latest" GitHub Release with the freshly built .bin (see the release job).
 
 on:
   push:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -57,3 +61,34 @@ jobs:
           name: planck_ez_glow_firmware
           path: out/*.bin
           if-no-files-found: error
+
+  # Publishes/updates a rolling "latest" GitHub Release with the built .bin so
+  # it can be fetched from a stable location (see flash.sh). Runs on main only,
+  # on a clean runner (not the qmk_cli container) where release tooling works
+  # reliably. The artifact is handed over from the build job.
+  release:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download built firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: planck_ez_glow_firmware
+          path: out
+
+      - name: Publish/update the 'latest' rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Planck EZ firmware
+          body: |
+            Rolling build of the latest `main` firmware.
+
+            Commit: ${{ github.sha }}
+          files: out/*.bin
+          make_latest: true
+
