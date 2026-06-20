@@ -6,7 +6,7 @@
 #include "i18n.h"
 
 enum planck_keycodes {
-  RGB_SLD = EZ_SAFE_RANGE,
+  RGB_SLD = SAFE_RANGE,
 };
 
 
@@ -76,9 +76,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   ),
 
   [_LAYER6] = LAYOUT_planck_grid(
-    QK_BOOT,        KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_TRANSPARENT, KC_TRANSPARENT, RGB_TOG,        TOGGLE_LAYER_COLOR,KC_NO,          KC_NO,          KC_TRANSPARENT, 
-    KC_LEFT_GUI,    KC_LEFT_ALT,    KC_LEFT_CTRL,   KC_LEFT_SHIFT,  KC_NO,          KC_TRANSPARENT, KC_TRANSPARENT, RGB_MODE_FORWARD,RGB_HUI,        RGB_VAI,        RGB_SAI,        RGB_SPI,        
-    KC_NO,          KC_RIGHT_ALT,   KC_NO,          KC_NO,          KC_NO,          KC_TRANSPARENT, KC_TRANSPARENT, RGB_SLD,        RGB_HUD,        RGB_VAD,        RGB_SAD,        RGB_SPD,        
+    QK_BOOT,        KC_NO,          KC_NO,          KC_NO,          KC_NO,          KC_TRANSPARENT, KC_TRANSPARENT, RM_TOGG,        TOGGLE_LAYER_COLOR,KC_NO,          KC_NO,          KC_TRANSPARENT, 
+    KC_LEFT_GUI,    KC_LEFT_ALT,    KC_LEFT_CTRL,   KC_LEFT_SHIFT,  KC_NO,          KC_TRANSPARENT, KC_TRANSPARENT, RM_NEXT,        RM_HUEU,        RM_VALU,        RM_SATU,        RM_SPDU,        
+    KC_NO,          KC_RIGHT_ALT,   KC_NO,          KC_NO,          KC_NO,          KC_TRANSPARENT, KC_TRANSPARENT, RGB_SLD,        RM_HUED,        RM_VALD,        RM_SATD,        RM_SPDD,        
     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_NO,          KC_NO,          KC_TRANSPARENT, KC_NO,          KC_AUDIO_VOL_DOWN,KC_AUDIO_MUTE,  KC_AUDIO_VOL_UP,KC_TRANSPARENT, KC_TRANSPARENT
   ),
 
@@ -166,9 +166,6 @@ void set_layer_color(int layer) {
 }
 
 bool rgb_matrix_indicators_user(void) {
-  if (rawhid_state.rgb_control) {
-      return false;
-  }
   if (keyboard_config.disable_layer_led) { return false; }
   switch (biton32(layer_state)) {
     case 0:
@@ -207,11 +204,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
 
     case RGB_SLD:
-        if (rawhid_state.rgb_control) {
-            return false;
-        }
         if (record->event.pressed) {
-            rgblight_mode(1);
+            rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR);
         }
         return false;
   }

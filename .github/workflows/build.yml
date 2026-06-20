@@ -1,6 +1,6 @@
 name: Build Planck EZ firmware
 
-# Builds the keymap in ./keymap against ZSA's QMK fork and publishes the .bin
+# Builds the keymap in ./keymap against mainline QMK and publishes the .bin
 # as a downloadable artifact. Runs on every push and can be started manually
 # from the Actions tab (Run workflow).
 
@@ -14,12 +14,13 @@ jobs:
     container: ghcr.io/qmk/qmk_cli
 
     steps:
-      - name: Check out ZSA's QMK fork
+      - name: Check out mainline QMK
         uses: actions/checkout@v4
         with:
-          repository: zsa/qmk_firmware
-          # ZSA's default branch tracks the current Oryx firmware revision.
-          # Pin to a tag/branch here if you ever need a specific revision.
+          repository: qmk/qmk_firmware
+          # Pinned to a known-good mainline commit for reproducible builds.
+          # Bump this SHA to pick up newer QMK; re-test the build afterwards.
+          ref: c6381000309a8d9300cb1ca8ec01cfa3d4ed4c5f
           submodules: recursive
           path: qmk_firmware
 

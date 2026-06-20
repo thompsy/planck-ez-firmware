@@ -6,6 +6,10 @@
 
 #define MIDI_BASIC
 
+/* Enables ZSA Oryx-origin keycodes that mainline QMK keeps for the Planck EZ:
+   TOGGLE_LAYER_COLOR and LED_LEVEL, plus smart-LED-aware RM_TOGG behaviour. */
+#define ORYX_CONFIGURATOR
+
 #define ENCODER_RESOLUTION 4
 
 #undef TAPPING_TERM

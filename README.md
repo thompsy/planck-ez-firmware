@@ -2,9 +2,9 @@
 
 Cloud-compiled QMK firmware for my Planck EZ Glow. The layout lives in
 [`keymap/`](keymap/); GitHub Actions builds it against
-[ZSA's QMK fork](https://github.com/zsa/qmk_firmware) and publishes the `.bin`
-as a downloadable artifact. **No local toolchain required** — flash the result
-through Keymapp exactly like an Oryx build.
+[mainline QMK](https://github.com/qmk/qmk_firmware) and publishes the `.bin`
+as a downloadable artifact. **No local toolchain required** — build in the
+cloud, then flash with QMK Toolbox or `dfu-util`.
 
 ## One-time setup
 
@@ -14,7 +14,7 @@ through Keymapp exactly like an Oryx build.
    cd planck-ez-firmware
    git init -b main
    git add .
-   git commit -m "Initial Planck EZ Miryoku layout"
+   git commit -m "Planck EZ Miryoku layout (mainline QMK)"
    git remote add origin git@github.com:<you>/<repo>.git
    git push -u origin main
    ```
@@ -28,18 +28,28 @@ through Keymapp exactly like an Oryx build.
   **`planck_ez_glow_firmware`** artifact from the Artifacts section. It's a zip
   containing the `.bin`.
 
+The workflow pins a specific mainline QMK commit (`ref:` in
+`.github/workflows/build.yml`) for reproducible builds. Bump that SHA to pick up
+a newer QMK, then re-run and re-test.
+
 ## Flash
 
-1. Unzip to get `zsa_planck_ez_glow.bin` (name may vary slightly).
-2. Open **Keymapp**, click **Flash**, choose **Flash a custom firmware**, and
-   select the `.bin`. Put the board in bootloader mode (reset) when prompted.
+The Planck EZ is an STM32 board and uses the built-in **DFU bootloader** over
+USB. Enter the bootloader by pressing the physical **reset button** (underside
+of the board) or by tapping the `QK_BOOT` key already mapped on several layers.
 
-`ORYX_ENABLE = yes` is kept in `keymap/rules.mk`, so Keymapp's live per-layer
-LED display still works.
+Then flash with whichever tool you prefer:
+
+- **QMK Toolbox (GUI, no compiler):** open the `.bin`, put the board in
+  bootloader mode, click **Flash**.
+- **QMK CLI:** `qmk flash -kb zsa/planck_ez/glow -km miryoku_tweaked`
+  (compiles locally, then waits for the bootloader).
+- **`dfu-util` (raw CLI):**
+  ```bash
+  dfu-util -a 0 -s 0x08000000:leave -D planck_ez_glow_miryoku_tweaked.bin
+  ```
 
 ## What changed vs. the Oryx export
-
-These are the only edits to the original Oryx source:
 
 - **Tap/hold tuning made explicit** in `keymap/config.h`: `PERMISSIVE_HOLD`,
   `CHORDAL_HOLD`, and `FLOW_TAP_TERM 150` (the settings you'd toggled in Oryx,
@@ -53,18 +63,39 @@ These are the only edits to the original Oryx source:
   correct. Move it by editing `dquo_combo[]` in `keymap/keymap.c` (keep
   `COMBO_COUNT` in `config.h` in sync).
 
+## Converted from the ZSA fork to mainline QMK
+
+This layout originally built against ZSA's QMK fork. It now builds against
+mainline `qmk/qmk_firmware`. The changes made for the port:
+
+- `EZ_SAFE_RANGE` → `SAFE_RANGE` (mainline custom-keycode range).
+- Layer-6 lighting keys migrated from the removed rgblight `RGB_*` keycodes to
+  RGB Matrix `RM_*` keycodes (`RM_TOGG`, `RM_NEXT`, `RM_HUEU/HUED`,
+  `RM_VALU/VALD`, `RM_SATU/SATD`, `RM_SPDU/SPDD`). The custom `RGB_SLD` key now
+  calls `rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR)`.
+- Removed the Oryx/Keymapp live-control hooks (`rawhid_state`), which don't exist
+  in mainline. Per-layer LED colours still work — they're driven by
+  `rgb_matrix_indicators_user()` + the `ledmap[]` table in `keymap.c`, gated only
+  by `keyboard_config.disable_layer_led`.
+- `rules.mk`: dropped `ORYX_ENABLE` and `RGB_MATRIX_CUSTOM_KB`; deleted the empty
+  `rgb_matrix_kb.inc` (the glow's RGB matrix is built into the mainline keyboard).
+- `config.h`: added `#define ORYX_CONFIGURATOR`, which is how mainline exposes the
+  `TOGGLE_LAYER_COLOR` and `LED_LEVEL` keycodes for the Planck EZ.
+
+### Trade-off vs. Keymapp
+
+Mainline builds can't be flashed or inspected with Keymapp's live per-layer LED
+display (that depends on the ZSA-fork-only Oryx hooks). Flashing is done with
+QMK Toolbox / `qmk flash` / `dfu-util` instead, as above.
+
 ## Notes / troubleshooting
 
-- This keymap depends on ZSA-only code (`EZ_SAFE_RANGE`, `rawhid_state`,
-  `ORYX_ENABLE`, the custom RGB matrix), so it **must** build against ZSA's fork.
-  Don't switch the workflow to `qmk/qmk_firmware` (mainline) — it won't compile.
-- If the build ever fails on `CHORDAL_HOLD` or `FLOW_TAP_TERM`, ZSA's fork
-  branch is older than those features; remove those two lines from `config.h`
-  (you'll fall back to permissive-hold-only behaviour) or pin a newer ref in
-  `.github/workflows/build.yml`.
 - Tuning knob: `FLOW_TAP_TERM` in `config.h`. Lower (~120) = more aggressive at
   treating fast keys as taps (fewer roll misfires); higher (~175) = easier to
   land deliberate mod chords.
+- If a build breaks after bumping the pinned QMK SHA, the usual cause is a
+  keycode rename or hook-signature change in mainline. Check the QMK changelog
+  for the range you jumped, or pin back to the previous SHA.
 
 ## Why not Achordion?
 
