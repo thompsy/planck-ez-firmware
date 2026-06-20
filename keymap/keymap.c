@@ -107,20 +107,42 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 
-/* Combos
-   U + Y (right hand, top row) chorded together -> " (double quote), so it never
-   needs a home-row Shift and is therefore immune to flow-tap demoting the Shift
-   to a tap. Change the keys below to move it; keep COMBO_COUNT in config.h in
-   sync if you add more. */
-enum combos {
-  CMB_DQUO,
-};
+/* Flow Tap tuning.
 
-const uint16_t PROGMEM dquo_combo[] = {KC_U, KC_Y, COMBO_END};
+   Flow Tap forces a mod-tap/layer-tap to its TAP when pressed within
+   FLOW_TAP_TERM of the previous key (to avoid accidental mods during fast
+   typing). That default behaviour caused two misfires:
+     - Shift+'  ->  "t\""  (the home-row Shift demoted to its letter tap)
+     - layer-thumb symbols (e.g. '-') -> "<space><letter>" because KC_SPC is in
+       the default Flow Tap set, so LT(layer, KC_SPACE) demoted to Space.
 
-combo_t key_combos[] = {
-  [CMB_DQUO] = COMBO(dquo_combo, KC_DQUO),
-};
+   Returning 0 disables Flow Tap for a given tap-hold key. We disable it on the
+   two home-row Shift keys and on all six layer-tap thumb keys, so deliberate
+   Shift-chords and layer holds always engage. Flow Tap stays active on the
+   inner home-row mods (GUI/Alt/Ctrl/RALT) so fast letter rolls are still
+   protected from accidental modifier activation. */
+uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
+                           uint16_t prev_keycode) {
+    switch (keycode) {
+        // Home-row Shift mod-taps (fixes " -> t").
+        case MT(MOD_LSFT, KC_T):
+        case MT(MOD_LSFT, KC_N):
+        // Layer-tap thumb keys (fixes - -> " g" and the same class of bug).
+        case LT(6, KC_ESCAPE):
+        case LT(4, KC_ENTER):
+        case LT(5, KC_TAB):
+        case LT(8, KC_BSPC):
+        case LT(7, KC_SPACE):
+        case LT(9, KC_DELETE):
+            return 0;
+        default:
+            break;
+    }
+    if (is_flow_tap_key(keycode) && is_flow_tap_key(prev_keycode)) {
+        return FLOW_TAP_TERM;
+    }
+    return 0;
+}
 
 
 extern rgb_config_t rgb_matrix_config;

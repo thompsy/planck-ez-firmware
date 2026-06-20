@@ -58,10 +58,16 @@ Then flash with whichever tool you prefer:
   (left-thumb Enter hold). Tap it, then type — the next word auto-capitalises and
   cancels on space. This removes most need to *hold* a home-row Shift while
   typing fast, which is the root cause of the `pyHon`/`t'` misfires.
-- **`"` via a combo**: press **U + Y together** to emit `"`. Because no Shift is
-  involved, flow-tap can't demote it — so `"` is reliable while `python` stays
-  correct. Move it by editing `dquo_combo[]` in `keymap/keymap.c` (keep
-  `COMBO_COUNT` in `config.h` in sync).
+- **Per-key Flow Tap** (`get_flow_tap_term()` in `keymap/keymap.c`): Flow Tap
+  normally forces a mod-tap/layer-tap to its *tap* when pressed quickly after the
+  previous key, which caused two misfires — `Shift+'` came out as `t"`, and
+  layer-thumb symbols like `-` came out as `<space><letter>` (because `KC_SPC` is
+  in Flow Tap's default set). The callback returns `0` (disables Flow Tap) for the
+  two home-row Shift keys and all six layer-tap thumb keys, so deliberate
+  Shift-chords and layer holds always engage. Flow Tap stays active on the inner
+  home-row mods (GUI/Alt/Ctrl/RALT), so fast letter rolls are still protected from
+  accidental modifiers. Tune `FLOW_TAP_TERM` in `config.h` for those remaining
+  keys; add/remove cases in the callback to change which keys opt out.
 
 ## Converted from the ZSA fork to mainline QMK
 
@@ -99,8 +105,8 @@ QMK Toolbox / `qmk flash` / `dfu-util` instead, as above.
 
 ## Why not Achordion?
 
-Achordion is the usual "go further" suggestion, but it wouldn't fix the `"`
-problem: like flow-tap, its streak/handedness logic decides Shift's fate from
-timing, so fast `Shift+"` still looks like a roll. It also overlaps with the
-`CHORDAL_HOLD`/`FLOW_TAP` setup you already like. The combo sidesteps the issue
-entirely by not using Shift at all, so it's the better fix here.
+Achordion is the usual "go further" suggestion, but it overlaps with the
+`CHORDAL_HOLD`/`FLOW_TAP` setup already in use. The `"`→`t"` and `-`→`<space>g`
+misfires turned out to be Flow Tap demoting deliberate holds to taps, so the
+targeted fix is the per-key `get_flow_tap_term()` callback (see above) rather
+than adding another tap/hold heuristic on top.

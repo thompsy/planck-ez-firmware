@@ -25,9 +25,6 @@
 #define CHORDAL_HOLD
 #define FLOW_TAP_TERM 150
 
-/* Combos (see key_combos[] in keymap.c) */
-#define COMBO_COUNT 1
-
 #define USB_SUSPEND_WAKEUP_DELAY 0
 #define SERIAL_NUMBER "3yGOB/7vBBxj"
 #define LAYER_STATE_16BIT
