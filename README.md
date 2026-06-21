@@ -1,24 +1,69 @@
 # Planck EZ Glow — Miryoku (tweaked) firmware
 
-Cloud-compiled QMK firmware for my Planck EZ Glow. The layout lives in
-[`keymap/`](keymap/); GitHub Actions builds it against
-[mainline QMK](https://github.com/qmk/qmk_firmware) and publishes the `.bin`
-as a downloadable artifact. **No local toolchain required** — build in the
-cloud, then flash with QMK Toolbox or `dfu-util`.
+## Overview
 
-## One-time setup
+Custom QMK firmware for the **Planck EZ Glow** — a 47-key, 4×12 ortholinear
+keyboard with an STM32 microcontroller and per-key RGB. The layout is a
+**Miryoku-style** layered keymap: Colemak-DH alphas, home-row mods, and thumb
+keys that double as layer switches. "Tweaked" means a few personal adjustments
+on top of vanilla Miryoku — tap/hold tuning, Caps Word, and a per-key Flow Tap
+fix for symbol misfires.
 
-1. Create a new GitHub repo (private is fine).
-2. Push this folder to it:
-   ```bash
-   cd planck-ez-firmware
-   git init -b main
-   git add .
-   git commit -m "Planck EZ Miryoku layout (mainline QMK)"
-   git remote add origin git@github.com:<you>/<repo>.git
-   git push -u origin main
-   ```
-   The push triggers the build automatically.
+It builds **entirely in the cloud** — GitHub Actions compiles it against
+[mainline QMK](https://github.com/qmk/qmk_firmware), uploads the `.bin` as an
+artifact, and publishes it to a rolling **`latest`** GitHub Release. No local
+toolchain is required: build in the cloud, then run [`./flash.sh`](flash.sh) to
+fetch the newest firmware and flash it in one step (or use QMK Toolbox /
+`dfu-util` manually).
+
+> **This is my personal config.** The repository URL, the `SERIAL_NUMBER` in
+> `keymap/config.h`, and the UK currency keys (`£`, `€`) are specific to me. If
+> you want to reuse it, fork the repo and adjust those to taste.
+
+## The layout
+
+Base layer (tap legends shown; held behaviour noted below):
+
+```
+┌─────┬─────┬─────┬─────┬─────┬─────┐ ┌─────┬─────┬─────┬─────┬─────┬─────┐
+│  Q  │  W  │  F  │  P  │  B  │ TD  │ │     │  J  │  L  │  U  │  Y  │  '  │
+├─────┼─────┼─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┼─────┼─────┤
+│  A  │  R  │  S  │  T  │  G  │     │ │     │  M  │  N  │  E  │  I  │  O  │
+│ GUI │ Alt │ Ctl │ Sft │     │     │ │     │     │ Sft │ Ctl │ Alt │ GUI │
+├─────┼─────┼─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┼─────┼─────┤
+│  Z  │  X  │  C  │  D  │  V  │     │ │     │  K  │  H  │  ,  │  .  │  /  │
+│     │RAlt │     │ Meh │     │     │ │     │     │ Meh │     │RAlt │     │
+├─────┼─────┼─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┼─────┼─────┤
+│     │     │ Esc │ Ent │ Tab │     │ │     │ Bsp │ Spc │ Del │     │     │
+└─────┴─────┴─────┴─────┴─────┴─────┘ └─────┴─────┴─────┴─────┴─────┴─────┘
+```
+
+- **Home-row mods** (hold a home-row key for a modifier): GUI / Alt / Ctrl /
+  Shift, mirrored on both hands. `X` and `.` add Right-Alt; `D` and `H` add Meh
+  (Ctrl+Alt+Shift).
+- **Thumb keys** tap to `Esc Ent Tab` (left) and `Bsp Spc Del` (right), and
+  **hold** to reach layers:
+  | Hold thumb | Layer                                    |
+  |------------|------------------------------------------|
+  | Esc        | RGB / media controls                     |
+  | Enter      | Navigation (arrows, Home/End, Caps Word) |
+  | Tab        | Mouse (cursor, wheel, buttons)           |
+  | Space      | Numbers + math symbols                   |
+  | Bksp       | Symbols / brackets                       |
+  | Delete     | Function keys (F1–F12)                   |
+- **TD** (top row) is a tap-dance: double-tap to switch to/from a plain QWERTY
+  layer.
+
+The full keymap, all layers, and the RGB per-layer colour map live in
+[`keymap/keymap.c`](keymap/keymap.c).
+
+## Repo layout
+
+| Path                          | What it is                                                |
+|-------------------------------|-----------------------------------------------------------|
+| `keymap/`                     | The layout: `keymap.c`, `config.h`, `rules.mk`, etc.      |
+| `flash.sh`                    | Helper that downloads the latest firmware and flashes it. |
+| `.github/workflows/build.yml` | Cloud build + rolling-release workflow.                   |
 
 ## Get a new firmware build
 
@@ -27,6 +72,12 @@ cloud, then flash with QMK Toolbox or `dfu-util`.
 - When the run finishes (green check, ~2–5 min), open it and download the
   **`planck_ez_glow_firmware`** artifact from the Artifacts section. It's a zip
   containing the `.bin`.
+
+Every successful build on `main` also updates a rolling **`latest`** GitHub
+Release with the `.bin` at a stable URL:
+<https://github.com/thompsy/planck-ez-firmware/releases/tag/latest>. This is the
+durable download source — unlike Actions artifacts (which expire after ~90
+days), the release sticks around, and it's what [`./flash.sh`](flash.sh) fetches.
 
 The workflow pins a specific mainline QMK commit (`ref:` in
 `.github/workflows/build.yml`) for reproducible builds. Bump that SHA to pick up
@@ -38,75 +89,60 @@ The Planck EZ is an STM32 board and uses the built-in **DFU bootloader** over
 USB. Enter the bootloader by pressing the physical **reset button** (underside
 of the board) or by tapping the `QK_BOOT` key already mapped on several layers.
 
-Then flash with whichever tool you prefer:
+### Recommended: `./flash.sh`
+
+The [`flash.sh`](flash.sh) helper fetches the latest firmware from the `latest`
+release and flashes it — no manual download, no hunting for the `.bin`.
+
+Prerequisites (one-time):
+
+```bash
+brew install gh dfu-util
+gh auth login          # authenticate as an account that can read this repo
+```
+
+Then:
+
+```bash
+./flash.sh             # download the latest .bin, wait for the bootloader, flash
+```
+
+Run it, and when it prints "Waiting for the keyboard...", press the reset button
+(or tap `QK_BOOT`). Because the script is already running, you don't need a
+working keyboard during the flash. It auto-detects the DFU device and flashes.
+
+Flags:
+
+- `./flash.sh --offline` — skip the download and flash the `.bin` already in
+  `firmware_download/` (useful with no network).
+- `./flash.sh --help` — usage.
+
+### Manual alternatives
+
+If you'd rather not use the script:
 
 - **QMK Toolbox (GUI, no compiler):** open the `.bin`, put the board in
   bootloader mode, click **Flash**.
 - **QMK CLI:** `qmk flash -kb zsa/planck_ez/glow -km miryoku_tweaked`
   (compiles locally, then waits for the bootloader).
-- **`dfu-util` (raw CLI):**
+- **`dfu-util` (raw CLI):** with the board in bootloader mode, point it at the
+  `.bin` (e.g. the one `flash.sh` downloaded into `firmware_download/`):
   ```bash
-  dfu-util -a 0 -s 0x08000000:leave -D planck_ez_glow_miryoku_tweaked.bin
+  dfu-util -a 0 -s 0x08000000:leave -D firmware_download/zsa_planck_ez_glow_miryoku_tweaked.bin
   ```
-
-## What changed vs. the Oryx export
-
-- **Tap/hold tuning made explicit** in `keymap/config.h`: `PERMISSIVE_HOLD`,
-  `CHORDAL_HOLD`, and `FLOW_TAP_TERM 150` (the settings you'd toggled in Oryx,
-  now under your control and tunable).
-- **Caps Word** (`CW_TOGG`) replaces plain `KC_CAPS` on the Nav layer
-  (left-thumb Enter hold). Tap it, then type — the next word auto-capitalises and
-  cancels on space. This removes most need to *hold* a home-row Shift while
-  typing fast, which is the root cause of the `pyHon`/`t'` misfires.
-- **Per-key Flow Tap** (`get_flow_tap_term()` in `keymap/keymap.c`): Flow Tap
-  normally forces a mod-tap/layer-tap to its *tap* when pressed quickly after the
-  previous key, which caused two misfires — `Shift+'` came out as `t"`, and
-  layer-thumb symbols like `-` came out as `<space><letter>` (because `KC_SPC` is
-  in Flow Tap's default set). The callback returns `0` (disables Flow Tap) for the
-  two home-row Shift keys and all six layer-tap thumb keys, so deliberate
-  Shift-chords and layer holds always engage. Flow Tap stays active on the inner
-  home-row mods (GUI/Alt/Ctrl/RALT), so fast letter rolls are still protected from
-  accidental modifiers. Tune `FLOW_TAP_TERM` in `config.h` for those remaining
-  keys; add/remove cases in the callback to change which keys opt out.
-
-## Converted from the ZSA fork to mainline QMK
-
-This layout originally built against ZSA's QMK fork. It now builds against
-mainline `qmk/qmk_firmware`. The changes made for the port:
-
-- `EZ_SAFE_RANGE` → `SAFE_RANGE` (mainline custom-keycode range).
-- Layer-6 lighting keys migrated from the removed rgblight `RGB_*` keycodes to
-  RGB Matrix `RM_*` keycodes (`RM_TOGG`, `RM_NEXT`, `RM_HUEU/HUED`,
-  `RM_VALU/VALD`, `RM_SATU/SATD`, `RM_SPDU/SPDD`). The custom `RGB_SLD` key now
-  calls `rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR)`.
-- Removed the Oryx/Keymapp live-control hooks (`rawhid_state`), which don't exist
-  in mainline. Per-layer LED colours still work — they're driven by
-  `rgb_matrix_indicators_user()` + the `ledmap[]` table in `keymap.c`, gated only
-  by `keyboard_config.disable_layer_led`.
-- `rules.mk`: dropped `ORYX_ENABLE` and `RGB_MATRIX_CUSTOM_KB`; deleted the empty
-  `rgb_matrix_kb.inc` (the glow's RGB matrix is built into the mainline keyboard).
-- `config.h`: added `#define ORYX_CONFIGURATOR`, which is how mainline exposes the
-  `TOGGLE_LAYER_COLOR` and `LED_LEVEL` keycodes for the Planck EZ.
-
-### Trade-off vs. Keymapp
-
-Mainline builds can't be flashed or inspected with Keymapp's live per-layer LED
-display (that depends on the ZSA-fork-only Oryx hooks). Flashing is done with
-QMK Toolbox / `qmk flash` / `dfu-util` instead, as above.
 
 ## Notes / troubleshooting
 
-- Tuning knob: `FLOW_TAP_TERM` in `config.h`. Lower (~120) = more aggressive at
-  treating fast keys as taps (fewer roll misfires); higher (~175) = easier to
-  land deliberate mod chords.
-- If a build breaks after bumping the pinned QMK SHA, the usual cause is a
-  keycode rename or hook-signature change in mainline. Check the QMK changelog
-  for the range you jumped, or pin back to the previous SHA.
-
-## Why not Achordion?
-
-Achordion is the usual "go further" suggestion, but it overlaps with the
-`CHORDAL_HOLD`/`FLOW_TAP` setup already in use. The `"`→`t"` and `-`→`<space>g`
-misfires turned out to be Flow Tap demoting deliberate holds to taps, so the
-targeted fix is the per-key `get_flow_tap_term()` callback (see above) rather
-than adding another tap/hold heuristic on top.
+- **Tap/hold tuning knob:** `FLOW_TAP_TERM` in `config.h`. Lower (~120) = more
+  aggressive at treating fast keys as taps (fewer roll misfires); higher (~175)
+  = easier to land deliberate mod chords.
+- **Symbol misfires:** a per-key `get_flow_tap_term()` callback in `keymap.c`
+  disables Flow Tap on the Shift mod-taps and the layer-tap thumbs, which fixes
+  `"` coming out as `t"` and `-` as `<space>g`. Adjust the cases there if other
+  keys misfire.
+- **Build breaks after bumping the pinned QMK SHA:** usually a keycode rename or
+  hook-signature change in mainline. Check the QMK changelog for the range you
+  jumped, or pin back to the previous SHA.
+- **Background:** this firmware was ported from ZSA's QMK fork to mainline
+  `qmk/qmk_firmware`; see the git history for the porting details and the
+  reasoning behind the Flow Tap fix.
