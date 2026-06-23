@@ -22,6 +22,7 @@
    letter rolls (e.g. "th") still occasionally fire a mod, up toward 175 if
    deliberate mod chords get demoted to taps. */
 #define PERMISSIVE_HOLD
+#define PERMISSIVE_HOLD_PER_KEY
 #define CHORDAL_HOLD
 #define FLOW_TAP_TERM 130
 
