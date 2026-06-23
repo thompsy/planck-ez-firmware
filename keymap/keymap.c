@@ -124,10 +124,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
                            uint16_t prev_keycode) {
     switch (keycode) {
-        // Home-row Shift mod-taps (fixes " -> t").
-        case MT(MOD_LSFT, KC_T):
-        case MT(MOD_LSFT, KC_N):
-        // Layer-tap thumb keys (fixes - -> " g" and the same class of bug).
+        // Layer-tap thumb keys keep Flow Tap disabled so deliberate layer
+        // holds always engage even right after another keypress.
         case LT(6, KC_ESCAPE):
         case LT(4, KC_ENTER):
         case LT(5, KC_TAB):
@@ -135,6 +133,15 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
         case LT(7, KC_SPACE):
         case LT(9, KC_DELETE):
             return 0;
+        // Home-row Shift mod-taps and the MEH home-row keys: keep Flow Tap
+        // ACTIVE so fast same-hand letter rolls (e.g. "them") demote them to
+        // their letter tap instead of firing a mod ("HEm"). Gate on the
+        // prev-key so it only triggers right after another keypress.
+        case MT(MOD_LSFT, KC_T):
+        case MT(MOD_LSFT, KC_N):
+        case MEH_T(KC_D):
+        case MEH_T(KC_H):
+            return is_flow_tap_key(prev_keycode) ? FLOW_TAP_TERM : 0;
         default:
             break;
     }

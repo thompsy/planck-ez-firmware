@@ -23,7 +23,7 @@
    deliberate mod chords get demoted to taps. */
 #define PERMISSIVE_HOLD
 #define CHORDAL_HOLD
-#define FLOW_TAP_TERM 150
+#define FLOW_TAP_TERM 130
 
 #define USB_SUSPEND_WAKEUP_DELAY 0
 #define SERIAL_NUMBER "3yGOB/7vBBxj"
