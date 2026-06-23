@@ -4,6 +4,7 @@
 #endif
 #include "eeprom.h"
 #include "i18n.h"
+#include "print.h"  /* TEMPORARY DEBUG: tap-hold timing logging. */
 
 enum planck_keycodes {
   RGB_SLD = SAFE_RANGE,
@@ -156,6 +157,7 @@ extern rgb_config_t rgb_matrix_config;
 
 void keyboard_post_init_user(void) {
   rgb_matrix_enable();
+  debug_enable = true;  /* TEMPORARY DEBUG: enable console logging. */
 }
 
 const uint8_t PROGMEM ledmap[][RGB_MATRIX_LED_COUNT][3] = {
@@ -230,6 +232,12 @@ bool rgb_matrix_indicators_user(void) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+#ifdef CONSOLE_ENABLE
+  /* TEMPORARY DEBUG: log every key event with timing for tap-hold diagnosis. */
+  uprintf("kc:%-14s pressed:%u time:%5u int:%u count:%u\n",
+          get_keycode_string(keycode), record->event.pressed,
+          record->event.time, record->tap.interrupted, record->tap.count);
+#endif
   switch (keycode) {
 
     case RGB_SLD:

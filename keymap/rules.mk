@@ -1,4 +1,6 @@
-CONSOLE_ENABLE = no
+# TEMPORARY DEBUG: console logging for tap-hold timing diagnosis. Revert to no.
+CONSOLE_ENABLE = yes
+KEYCODE_STRING_ENABLE = yes
 COMMAND_ENABLE = no
 AUDIO_ENABLE = no
 MOUSEKEY_ENABLE = yes
