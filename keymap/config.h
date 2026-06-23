@@ -18,13 +18,12 @@
 #define QUICK_TAP_TERM 0
 
 /* Home-row-mod tap/hold tuning (previously toggled in Oryx; defined here now
-   that we own the build). Adjust FLOW_TAP_TERM down toward 120 if cross-hand
-   letter rolls (e.g. "th") still occasionally fire a mod, up toward 175 if
-   deliberate mod chords get demoted to taps. */
+   that we own the build). Flow Tap was removed; tap/hold resolution is governed
+   by TAPPING_TERM plus per-key Permissive Hold and Chordal Hold (see
+   get_permissive_hold() in keymap.c). */
 #define PERMISSIVE_HOLD
 #define PERMISSIVE_HOLD_PER_KEY
 #define CHORDAL_HOLD
-#define FLOW_TAP_TERM 130
 
 #define USB_SUSPEND_WAKEUP_DELAY 0
 #define SERIAL_NUMBER "3yGOB/7vBBxj"

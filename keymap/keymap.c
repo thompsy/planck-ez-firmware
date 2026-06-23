@@ -129,51 +129,6 @@ bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
 }
 
 
-/* Flow Tap tuning.
-
-   Flow Tap forces a mod-tap/layer-tap to its TAP when pressed within
-   FLOW_TAP_TERM of the previous key (to avoid accidental mods during fast
-   typing). That default behaviour caused two misfires:
-     - Shift+'  ->  "t\""  (the home-row Shift demoted to its letter tap)
-     - layer-thumb symbols (e.g. '-') -> "<space><letter>" because KC_SPC is in
-       the default Flow Tap set, so LT(layer, KC_SPACE) demoted to Space.
-
-   Returning 0 disables Flow Tap for a given tap-hold key. We disable it on the
-   two home-row Shift keys and on all six layer-tap thumb keys, so deliberate
-   Shift-chords and layer holds always engage. Flow Tap stays active on the
-   inner home-row mods (GUI/Alt/Ctrl/RALT) so fast letter rolls are still
-   protected from accidental modifier activation. */
-uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
-                           uint16_t prev_keycode) {
-    switch (keycode) {
-        // Layer-tap thumb keys keep Flow Tap disabled so deliberate layer
-        // holds always engage even right after another keypress.
-        case LT(6, KC_ESCAPE):
-        case LT(4, KC_ENTER):
-        case LT(5, KC_TAB):
-        case LT(8, KC_BSPC):
-        case LT(7, KC_SPACE):
-        case LT(9, KC_DELETE):
-            return 0;
-        // Home-row Shift mod-taps and the MEH home-row keys: keep Flow Tap
-        // ACTIVE so fast same-hand letter rolls (e.g. "them") demote them to
-        // their letter tap instead of firing a mod ("HEm"). Gate on the
-        // prev-key so it only triggers right after another keypress.
-        case MT(MOD_LSFT, KC_T):
-        case MT(MOD_LSFT, KC_N):
-        case MEH_T(KC_D):
-        case MEH_T(KC_H):
-            return is_flow_tap_key(prev_keycode) ? FLOW_TAP_TERM : 0;
-        default:
-            break;
-    }
-    if (is_flow_tap_key(keycode) && is_flow_tap_key(prev_keycode)) {
-        return FLOW_TAP_TERM;
-    }
-    return 0;
-}
-
-
 extern rgb_config_t rgb_matrix_config;
 
 void keyboard_post_init_user(void) {
