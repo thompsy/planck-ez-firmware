@@ -85,6 +85,7 @@ before shipping a clean build.
 ## keymap.c structure
 
 Enums at the top (`planck_keycodes`, `tap_dance_codes`, `planck_layers`), 8
-layers via `LAYOUT_planck_grid`, `process_record_user()`, tap-dance `dance_*`
-handlers, and the RGB per-layer colour map (`ledmap` / `set_layer_color` /
-`rgb_matrix_indicators_user`).
+layers via `LAYOUT_planck_grid`, `process_record_user()`, the
+`tap_dance_actions[]` table (double-tap layer swaps via
+`ACTION_TAP_DANCE_LAYER_MOVE`), and the RGB per-layer colour map (`ledmap` /
+`set_layer_color` / `rgb_matrix_indicators_user`).
