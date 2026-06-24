@@ -9,6 +9,38 @@ Only the keymap source lives here (`keymap/keymap.c`, `config.h`, `rules.mk`,
 `i18n.h`). The QMK firmware tree is **not** vendored, so there is no local
 `make` target and you cannot build locally without a separate QMK checkout.
 
+## Version control: use `jj`, not `git`
+
+This repo is managed with [Jujutsu (`jj`)](https://jj-vcs.github.io/) on top of
+the git backend. **Always use `jj` for version-control operations; do not use
+raw `git` commands** (the working copy is usually a detached-HEAD `jj` commit,
+so plain `git commit`/`git push` will fight the tool).
+
+Core workflow:
+
+- `jj status` — show working-copy changes (analogous to `git status`).
+- `jj diff` — show the diff of the working copy.
+- `jj log` — show the commit graph; `@` is the working copy, `@-` its parent.
+- `jj describe -m "message"` — set/replace the description of the current
+  working-copy commit (`@`). This is how you "commit": edits are already
+  tracked in `@`, you just give it a message.
+- `jj new` — start a fresh empty working-copy commit on top of the current one
+  (do this after `describe` so the next batch of edits is separate).
+- `jj bookmark set main -r @-` — move the `main` bookmark to a commit (jj
+  bookmarks are git branches). Point it at the described commit you want to
+  ship.
+- `jj git push` — push bookmarks to the `origin` remote. Pushing `main` ships
+  firmware (see below). Use `jj git fetch` to update from the remote.
+
+Typical "commit and push" sequence here:
+
+```
+jj describe -m "Short summary"   # describe the current @ (your edits)
+jj new                           # leave a clean working copy on top
+jj bookmark set main -r @-       # advance main to the described commit
+jj git push                      # publish (this triggers the CI build/release)
+```
+
 ## Builds run in CI, not locally
 
 - `.github/workflows/build.yml` checks out mainline QMK at a pinned SHA
@@ -52,7 +84,7 @@ before shipping a clean build.
 
 ## keymap.c structure
 
-Enums at the top (`planck_keycodes`, `tap_dance_codes`, `planck_layers`), 10
+Enums at the top (`planck_keycodes`, `tap_dance_codes`, `planck_layers`), 8
 layers via `LAYOUT_planck_grid`, `process_record_user()`, tap-dance `dance_*`
 handlers, and the RGB per-layer colour map (`ledmap` / `set_layer_color` /
 `rgb_matrix_indicators_user`).

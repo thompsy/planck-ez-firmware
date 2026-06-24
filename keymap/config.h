@@ -4,8 +4,6 @@
 #define STARTUP_SONG SONG(PLANCK_SOUND)
 #endif
 
-#define MIDI_BASIC
-
 /* Enables ZSA Oryx-origin keycodes that mainline QMK keeps for the Planck EZ:
    TOGGLE_LAYER_COLOR and LED_LEVEL, plus smart-LED-aware RM_TOGG behaviour. */
 #define ORYX_CONFIGURATOR
