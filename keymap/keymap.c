@@ -108,27 +108,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 
-/* Permissive Hold tuning.
-
-   Console logging showed "them" -> "HEm" is caused by PERMISSIVE_HOLD: typing
-   t->h->e fast nests the (opposite-hand) h press inside the held LSFT_T(KC_T),
-   and permissive hold settles t as Shift the moment h is released -- even
-   though t is held well under TAPPING_TERM. Flow Tap can't catch this because
-   the preceding thumb key is itself an undecided tap-hold, which exempts Flow
-   Tap. Disabling permissive hold on the two home-row Shift mod-taps stops the
-   nested roll from forcing Shift; a deliberate Shift chord still works by
-   holding past the tapping term. */
-bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case MT(MOD_LSFT, KC_T):
-        case MT(MOD_LSFT, KC_N):
-            return false;
-        default:
-            return true;
-    }
-}
-
-
 extern rgb_config_t rgb_matrix_config;
 
 void keyboard_post_init_user(void) {

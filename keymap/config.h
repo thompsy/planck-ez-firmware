@@ -18,12 +18,9 @@
 #define QUICK_TAP_TERM 0
 
 /* Home-row-mod tap/hold tuning (previously toggled in Oryx; defined here now
-   that we own the build). Flow Tap was removed; tap/hold resolution is governed
-   by TAPPING_TERM plus per-key Permissive Hold and Chordal Hold (see
-   get_permissive_hold() in keymap.c). */
-#define PERMISSIVE_HOLD
-#define PERMISSIVE_HOLD_PER_KEY
-#define CHORDAL_HOLD
+   that we own the build). Flow Tap, Permissive Hold and Chordal Hold are all
+   disabled; tap/hold resolution is governed purely by TAPPING_TERM (with
+   QUICK_TAP_TERM 0). A mod only engages by holding past the tapping term. */
 
 #define USB_SUSPEND_WAKEUP_DELAY 0
 #define SERIAL_NUMBER "3yGOB/7vBBxj"
