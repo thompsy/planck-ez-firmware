@@ -139,6 +139,10 @@ If you'd rather not use the script:
   it to reduce fast-roll misfires. `QUICK_TAP_TERM 0` disables auto-repeat on a
   quick second tap. Flow Tap, Permissive Hold, and Chordal Hold are all
   intentionally disabled — tap/hold is pure timing.
+- **Roll misfires** (e.g. `them` → `HEm`): with timing-only resolution these mean
+  a home-row mod-tap was held past the tapping term during a fast roll. Raise
+  `TAPPING_TERM`, or move the offending mod off the index home keys. See the git
+  history for the earlier Flow Tap and Permissive Hold experiments.
 - **Build breaks after bumping the pinned QMK SHA:** usually a keycode rename or
   hook-signature change in mainline. Check the QMK changelog for the range you
   jumped, or pin back to the previous SHA.
