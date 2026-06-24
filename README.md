@@ -6,8 +6,8 @@ Custom QMK firmware for the **Planck EZ Glow** — a 47-key, 4×12 ortholinear
 keyboard with an STM32 microcontroller and per-key RGB. The layout is a
 **Miryoku-style** layered keymap: Colemak-DH alphas, home-row mods, and thumb
 keys that double as layer switches. "Tweaked" means a few personal adjustments
-on top of vanilla Miryoku — tap/hold tuning, Caps Word, and a per-key Flow Tap
-fix for symbol misfires.
+on top of vanilla Miryoku — pure timing-based tap/hold tuning (`TAPPING_TERM`)
+and Caps Word.
 
 It builds **entirely in the cloud** — GitHub Actions compiles it against
 [mainline QMK](https://github.com/qmk/qmk_firmware), uploads the `.bin` as an
@@ -133,16 +133,15 @@ If you'd rather not use the script:
 
 ## Notes / troubleshooting
 
-- **Tap/hold tuning knob:** `FLOW_TAP_TERM` in `config.h`. Lower (~120) = more
-  aggressive at treating fast keys as taps (fewer roll misfires); higher (~175)
-  = easier to land deliberate mod chords.
-- **Symbol misfires:** a per-key `get_flow_tap_term()` callback in `keymap.c`
-  disables Flow Tap on the Shift mod-taps and the layer-tap thumbs, which fixes
-  `"` coming out as `t"` and `-` as `<space>g`. Adjust the cases there if other
-  keys misfire.
+- **Tap/hold tuning knob:** `TAPPING_TERM` in `config.h` (215). A home-row mod
+  or layer-tap thumb only triggers its hold action if held past this term;
+  release sooner and it taps. Raise it for easier deliberate mod chords; lower
+  it to reduce fast-roll misfires. `QUICK_TAP_TERM 0` disables auto-repeat on a
+  quick second tap. Flow Tap, Permissive Hold, and Chordal Hold are all
+  intentionally disabled — tap/hold is pure timing.
 - **Build breaks after bumping the pinned QMK SHA:** usually a keycode rename or
   hook-signature change in mainline. Check the QMK changelog for the range you
   jumped, or pin back to the previous SHA.
 - **Background:** this firmware was ported from ZSA's QMK fork to mainline
   `qmk/qmk_firmware`; see the git history for the porting details and the
-  reasoning behind the Flow Tap fix.
+  evolution of the tap/hold tuning.
