@@ -130,15 +130,6 @@ void set_layer_color(int layer) {
 }
 
 bool rgb_matrix_indicators_user(void) {
-  /* The Planck EZ has two onboard indicator LEDs either side of the spacebar,
-     driven by the board's layer_state_set_kb() for the legacy LOWER/RAISE/
-     ADJUST layers. Those constants collide with our layer numbering (Enter ->
-     layer 2 lights one, Tab -> layer 3 lights both), and there is no built-in
-     toggle. layer_state_set_kb() is non-weak and re-enables them after calling
-     layer_state_set_user(), so we re-assert "off" here every render frame. */
-  planck_ez_left_led_off();
-  planck_ez_right_led_off();
-
   if (keyboard_config.disable_layer_led) { return false; }
   switch (biton32(layer_state)) {
     case 0:

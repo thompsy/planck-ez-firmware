@@ -26,3 +26,13 @@
 
 #define RGB_MATRIX_STARTUP_SPD 60
 
+/* The Planck EZ lights its two onboard indicator LEDs (either side of the
+   spacebar) when the highest active layer equals one of these constants
+   (board default: 1/2/3 -> LOWER/RAISE/ADJUST). Our layers 2 and 3 collide
+   with RAISE/ADJUST, so entering them flashed those white LEDs. Point the
+   constants at layers nothing uses so the board's switch never matches and the
+   indicator LEDs stay dark; this leaves any caps-lock use of them intact. */
+#define PLANCK_EZ_LED_LOWER 250
+#define PLANCK_EZ_LED_RAISE 251
+#define PLANCK_EZ_LED_ADJUST 252
+
