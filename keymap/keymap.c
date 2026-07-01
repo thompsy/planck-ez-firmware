@@ -5,7 +5,13 @@
 
 enum planck_keycodes {
   RGB_SLD = SAFE_RANGE,
+  ERR_MARK,  /* Typing-error marker: logs a MARK line, types nothing, flashes red. */
 };
+
+/* Error-marker feedback: how long to flash the LEDs red after ERR_MARK. */
+#define ERR_MARK_FLASH_MS 150
+static uint16_t err_mark_flash_timer = 0;
+static bool     err_mark_flashing   = false;
 
 
 enum tap_dance_codes {
@@ -30,7 +36,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_Q,           KC_W,           KC_F,           KC_P,           KC_B,           TD(DANCE_0),    KC_TRANSPARENT, KC_J,           KC_L,           KC_U,           KC_Y,           KC_QUOTE,       
     MT(MOD_LGUI, KC_A),MT(MOD_LALT, KC_R),MT(MOD_LCTL, KC_S),MT(MOD_LSFT, KC_T),KC_G,           KC_TRANSPARENT, KC_TRANSPARENT, KC_M,           MT(MOD_LSFT, KC_N),MT(MOD_LCTL, KC_E),MT(MOD_LALT, KC_I),MT(MOD_LGUI, KC_O),
     KC_Z,           MT(MOD_RALT, KC_X),KC_C,           MEH_T(KC_D),    KC_V,           KC_TRANSPARENT, KC_TRANSPARENT, KC_K,           MEH_T(KC_H),    KC_COMMA,       MT(MOD_RALT, KC_DOT),KC_SLASH,       
-    KC_TRANSPARENT, KC_TRANSPARENT, LT(4, KC_ESCAPE),LT(2, KC_ENTER),LT(3, KC_TAB),  KC_TRANSPARENT, KC_NO,          LT(6, KC_BSPC), LT(5, KC_SPACE),LT(7, KC_DELETE),KC_TRANSPARENT, KC_TRANSPARENT
+    KC_TRANSPARENT, KC_TRANSPARENT, LT(4, KC_ESCAPE),LT(2, KC_ENTER),LT(3, KC_TAB),  ERR_MARK,       KC_NO,          LT(6, KC_BSPC), LT(5, KC_SPACE),LT(7, KC_DELETE),KC_TRANSPARENT, KC_TRANSPARENT
   ),
 
   [_LOWER] = LAYOUT_planck_grid(
@@ -130,6 +136,16 @@ void set_layer_color(int layer) {
 }
 
 bool rgb_matrix_indicators_user(void) {
+  /* Flash all LEDs red briefly after an ERR_MARK press, as confirmation that
+     the typing-error marker registered. Runs regardless of disable_layer_led. */
+  if (err_mark_flashing) {
+    if (timer_elapsed(err_mark_flash_timer) < ERR_MARK_FLASH_MS) {
+      rgb_matrix_set_color_all(RGB_RED);
+      return false;
+    }
+    err_mark_flashing = false;
+  }
+
   if (keyboard_config.disable_layer_led) { return false; }
   switch (biton32(layer_state)) {
     case 0:
@@ -176,6 +192,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case RGB_SLD:
         if (record->event.pressed) {
             rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR);
+        }
+        return false;
+
+    case ERR_MARK:
+        /* Typing-error marker: log a distinctive line for later analysis,
+           flash red for confirmation, and type nothing. */
+        if (record->event.pressed) {
+#ifdef CONSOLE_ENABLE
+            uprintf("MARK ================ time:%5u\n", record->event.time);
+#endif
+            err_mark_flashing   = true;
+            err_mark_flash_timer = timer_read();
         }
         return false;
   }
